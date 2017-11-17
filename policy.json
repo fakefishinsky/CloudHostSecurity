@@ -1,0 +1,48 @@
+[
+{"id": "sec_linux_01001",
+"title": "Set PermitRootLogin to no",
+"description": "Forbid root login by ssh.",
+"rationale": "this is rationale",
+"audit": {"description": "the description of auditing",
+          "commands":[
+					{
+					"id":"cmd_01",
+					"type":"shell:bash",
+					"command":"grep -i PermitRootLogin /etc/ssh/sshd_config",
+                    "expectReg":"^\\s*PermitRootLogin\\s+no",
+                    "expectFlag":"IS"
+					},
+					{
+					"id":"cmd_02",
+					"type":"shell:bash",
+					"command":"grep -i SyslogFacility /etc/ssh/sshd_config",
+                    "expectReg":"^\\s*SyslogFacility\\s+AUTH",
+                    "expectFlag":"IS"
+					},
+					{
+					"id":"cmd_03",
+					"type":"shell:bash",
+					"command":"grep -i LogLevel /etc/ssh/sshd_config",
+                    "expectReg":"^\\s*LogLevel\\s+INFO",
+                    "expectFlag":"IS"
+					}
+				 ],
+		  "run":"cmd_01 and (cmd_02 or cmd_03)"
+		},
+"remediation": {"description": "the description of remediation",
+                "commands":[
+					{
+					"id":"cmd_01",
+					"type":"shell:bash",
+					"command":"grep -i PermitRootLogin /etc/ssh/sshd_config"
+					},
+					{
+					"id":"cmd_02",
+					"type":"shell:bash",
+					"command":"grep -i LogLevel /etc/ssh/sshd_config"
+					}
+				 ],
+		        "run":"cmd_01 and cmd_02"
+			}
+}
+]
