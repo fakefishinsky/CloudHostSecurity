@@ -1,8 +1,8 @@
 package engine
 
 import (
-	"common"
 	"common/log"
+	"fmt"
 	"time"
 )
 
@@ -24,7 +24,7 @@ func init() {
 */
 func New() *Engine {
 	eng := &Engine{}
-	eng.handlers = map[string]Handler{}
+	eng.handlers = make(map[string]Handler)
 	eng.catchall = catchall
 	return eng
 }
@@ -36,6 +36,20 @@ func New() *Engine {
 - handler: 负责处理任务的函数
 */
 func (eng *Engine) Register(name string, handler Handler) error {
+	if name == "" {
+		return fmt.Errorf("Name for job can't be empty.")
+	}
+
+	if handler == nil {
+		return fmt.Errorf("Handler for job can't be nil.")
+	}
+
+	if _, exists := eng.handlers[name]; exists {
+		//已经存在名称相同，handler不同的Job
+		return fmt.Errorf("Job %s already registered.", name)
+	}
+
+	//注册信息的Job
 	eng.handlers[name] = handler
 	return nil
 }
@@ -73,23 +87,30 @@ func (eng *Engine) Job(name string, args ...string) *Job {
 	return job
 }
 
-//运行任务
-func (job *Job) Run() error {
-	defer job.Eng.tasks.Done()
+//判断Engine是否关闭了
+func (eng *Engine) IsShutdown() bool {
+	return eng.shutdown
+}
 
-	if job.handler != nil {
-		job.status = job.handler(job)
-		job.end = time.Now()
-		return nil
+func (eng *Engine) Shutdown() {
+	//加写锁，设置engine状态为关闭
+	eng.l.Lock()
+	if eng.shutdown {
+		eng.l.Unlock()
+		return
 	}
+	eng.shutdown = true
+	eng.l.Unlock()
 
-	return common.Error{_ERR_HANDLER_IS_NULL}
-}
+	//等待所有任务结束，设置任务超时时间为10秒
+	tasksDone := make(chan struct{})
+	go func() {
+		eng.tasks.Wait()
+		close(tasksDone)
+	}()
 
-func (eng *Engine) AddTask(n int) {
-	eng.tasks.Add(n)
-}
-
-func (eng *Engine) Wait() {
-	eng.tasks.Wait()
+	select {
+	case <-time.After(time.Second * 10):
+	case <-tasksDone:
+	}
 }
