@@ -70,7 +70,7 @@ func doDownload(uri, file string, flUnix bool) error {
 		}
 
 		//写数据
-		err = unixConn.Write(data)
+		_, err = unixConn.Write(data)
 		if err != nil {
 			unixConn.Close()
 			return err
