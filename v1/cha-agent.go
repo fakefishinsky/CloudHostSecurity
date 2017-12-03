@@ -7,6 +7,7 @@ import (
 	"jobs/checkpatch"
 	"jobs/download"
 	"runtime"
+	"time"
 )
 
 func test() {
@@ -16,11 +17,12 @@ func test() {
 	eng.Register(checkconfig.JOB_NAME, checkconfig.JobEntry)
 	eng.Register(download.JOB_NAME, download.JobEntry)
 
-	eng.AddTask(3)
 	go eng.Job("checkconfig", "hello").Run()
 	go eng.Job("checkpatch").Run()
 	go eng.Job("download", "http://www.baidu.com/", "baidu.html").Run()
-	eng.Wait()
+	
+	time.Sleep(time.Second * 3)
+	eng.Shutdown()
 }
 
 func main() {
